@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Minimum Cost String Transformation Simulator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#0a0a0a; color:#e0e0e0; }
+  
+  h1 { text-align:center; color:#76c7f5; padding:20px 0; font-size:28px; background:#1a1a1a; box-shadow:0 2px 10px rgba(0,0,0,0.5); }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  
+  .tabs { display:flex; justify-content:center; gap:10px; margin:20px 0; flex-wrap:wrap; }
+  .tab { padding:12px 30px; background:#2a2a2a; border:2px solid #444; border-radius:8px; cursor:pointer; font-weight:600; transition:0.3s; }
+  .tab:hover { background:#3a3a3a; border-color:#76c7f5; }
+  .tab.active { background:#2196F3; border-color:#2196F3; color:white; }
+  .tab:disabled { opacity:0.5; cursor:not-allowed; }
+
+  .content { display:none; animation: fadeIn 0.4s; }
+  .content.active { display:block; }
+  
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  /* Input Form */
+  .input-section { background:#1a1a1a; padding:30px; border-radius:12px; border:2px solid #333; margin:20px 0; }
+  .input-section h3 { color:#76c7f5; margin-bottom:20px; }
+  .form-group { margin-bottom:20px; }
+  .form-label { display:block; color:#76c7f5; font-weight:600; margin-bottom:8px; font-size:15px; }
+  .form-input { width:100%; padding:12px; background:#0f0f0f; border:2px solid #444; border-radius:8px; color:#e0e0e0; font-size:15px; font-family:monospace; }
+  .form-input:focus { outline:none; border-color:#76c7f5; }
+  .form-help { font-size:13px; color:#999; margin-top:5px; font-style:italic; }
+  .transform-inputs { display:grid; gap:15px; }
+  .transform-row { display:grid; grid-template-columns:80px 80px 100px 60px; gap:10px; align-items:end; }
+  .transform-row input { padding:10px; }
+  .btn-remove { background:#f44336; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; font-weight:600; }
+  .btn-add { background:#4CAF50; color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-weight:600; margin-top:10px; }
+  .error-message { background:#f44336; color:white; padding:12px; border-radius:8px; margin:15px 0; display:none; }
+  .error-message.show { display:block; }
+
+  /* Example cards */
+  .example-card { background:#1a1a1a; padding:25px; border-radius:12px; border:2px solid #333; margin:20px 0; }
+  .example-card h3 { color:#76c7f5; margin-bottom:15px; }
+  .code-block { background:#0f0f0f; padding:15px; border-radius:8px; border-left:4px solid #4CAF50; font-family:monospace; margin:10px 0; line-height:1.8; }
+  .highlight { color:#ffeb3b; font-weight:bold; }
+
+  .preset-buttons { display:flex; gap:10px; margin:15px 0; flex-wrap:wrap; }
+  .preset-btn { padding:10px 20px; background:#2a2a2a; border:2px solid #444; border-radius:8px; cursor:pointer; font-size:14px; transition:0.3s; }
+  .preset-btn:hover { border-color:#76c7f5; background:#3a3a3a; }
+
+  /* Graph Visualization */
+  .graph-container { position:relative; height:400px; background:#1a1a1a; border-radius:12px; border:2px solid #333; margin:20px 0; }
+  .graph-node { position:absolute; width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; color:white; box-shadow:0 4px 15px rgba(102,126,234,0.4); border:3px solid #76c7f5; z-index:10; }
+  .graph-edge { position:absolute; height:3px; background:#555; transform-origin:0 50%; z-index:1; }
+  .graph-edge::after { content:''; position:absolute; right:-8px; top:-4px; width:0; height:0; border-left:10px solid #555; border-top:5px solid transparent; border-bottom:5px solid transparent; }
+  .edge-cost { position:absolute; background:#ffeb3b; color:#000; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.3); z-index:5; }
+
+  /* Compact Matrix */
+  .matrix-wrapper { display:flex; justify-content:center; margin:30px 0; }
+  .compact-matrix { display:inline-grid; gap:4px; padding:25px; background:#1a1a1a; border-radius:12px; border:2px solid #333; }
+  .matrix-cell { min-width:60px; height:60px; display:flex; align-items:center; justify-content:center; border:2px solid #444; border-radius:8px; background:#0f0f0f; font-size:18px; font-weight:600; transition:0.3s; }
+  .matrix-header { background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-weight:bold; border-color:#667eea; }
+  .matrix-highlight { background:#ffeb3b; color:#000; border-color:#ffeb3b; animation:pulse 0.6s; box-shadow:0 0 20px rgba(255,235,59,0.6); }
+  .matrix-path { background:#4CAF50; color:#fff; border-color:#4CAF50; }
+  
+  @keyframes pulse { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.1); } }
+
+  /* String Visualization */
+  .strings-container { display:flex; justify-content:center; align-items:center; gap:30px; margin:30px 0; flex-wrap:wrap; }
+  .string-box { background:#1a1a1a; padding:20px; border-radius:12px; border:2px solid #333; min-width:250px; }
+  .string-label { text-align:center; color:#76c7f5; font-weight:bold; margin-bottom:15px; font-size:16px; }
+  .string-chars { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .char { width:55px; height:55px; display:flex; align-items:center; justify-content:center; background:#0f0f0f; border:3px solid #444; border-radius:10px; font-size:22px; font-weight:bold; transition:0.3s; position:relative; }
+  .char.active { border-color:#ffeb3b; background:#ffeb3b; color:#000; box-shadow:0 0 20px rgba(255,235,59,0.5); }
+  .char.done { border-color:#4CAF50; background:#4CAF50; color:#fff; }
+  .char.processing { animation:bounce 0.5s; }
+  
+  @keyframes bounce { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+
+  .arrow { font-size:40px; color:#76c7f5; }
+
+  /* Info Panel */
+  .info-panel { background:#1a1a1a; padding:25px; border-radius:12px; border:2px solid #76c7f5; margin:20px 0; min-height:120px; }
+  .info-title { font-size:20px; font-weight:bold; color:#76c7f5; margin-bottom:15px; display:flex; align-items:center; gap:10px; }
+  .info-content { font-size:16px; line-height:1.8; }
+
+  /* Cost Display */
+  .cost-display { display:flex; justify-content:center; gap:30px; margin:25px 0; flex-wrap:wrap; }
+  .cost-card { background:#1a1a1a; padding:20px 35px; border-radius:12px; border:2px solid #4CAF50; text-align:center; min-width:180px; }
+  .cost-value { font-size:48px; font-weight:bold; color:#4CAF50; }
+  .cost-label { font-size:14px; color:#999; margin-top:8px; text-transform:uppercase; letter-spacing:1px; }
+
+  /* Controls */
+  .controls { display:flex; justify-content:center; gap:15px; margin:30px 0; flex-wrap:wrap; }
+  .btn { padding:14px 28px; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; transition:0.3s; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
+  .btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.4); }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-primary { background:#2196F3; color:white; }
+  .btn-success { background:#4CAF50; color:white; }
+  .btn-warning { background:#FF9800; color:white; }
+  .btn-danger { background:#f44336; color:white; }
+  .btn-secondary { background:#9C27B0; color:white; }
+
+  /* Step Indicator */
+  .step-indicator { text-align:center; margin:25px 0; padding:15px; background:#2a2a2a; border-radius:8px; font-size:18px; font-weight:600; color:#76c7f5; }
+
+  /* Transformation Details */
+  .transform-list { background:#1a1a1a; padding:20px; border-radius:12px; border:2px solid #333; margin:20px 0; }
+  .transform-item { display:flex; align-items:center; gap:15px; padding:12px; background:#0f0f0f; border-radius:8px; margin:8px 0; border:2px solid #444; }
+  .transform-item.active { border-color:#ffeb3b; background:#2a2a00; }
+</style>
+</head>
+<body>
+
+<h1>🔄 Minimum Cost String Transformation Simulator</h1>
+
+<div class="container">
+  
+  <div class="tabs">
+    <div class="tab active" onclick="showTab(0)">⚙️ Input</div>
+    <div class="tab" onclick="showTab(1)" id="tab1Btn" disabled>📋 Problem</div>
+    <div class="tab" onclick="showTab(2)" id="tab2Btn" disabled>🗺️ Graph</div>
+    <div class="tab" onclick="showTab(3)" id="tab3Btn" disabled>📊 Matrix</div>
+    <div class="tab" onclick="showTab(4)" id="tab4Btn" disabled>▶️ Simulation</div>
+  </div>
+
+  <!-- Tab 0: Input -->
+  <div class="content active" id="tab0">
+    <div class="input-section">
+      <h3>📝 Enter Problem Input</h3>
+      
+      <div class="preset-buttons">
+        <button class="preset-btn" onclick="loadPreset(1)">Load Example 1</button>
+        <button class="preset-btn" onclick="loadPreset(2)">Load Example 2</button>
+        <button class="preset-btn" onclick="loadPreset(3)">Load Example 3</button>
+      </div>
+
+      <div class="error-message" id="errorMessage"></div>
+      
+      <div class="form-group">
+        <label class="form-label">String s:</label>
+        <input type="text" class="form-input" id="inputS" placeholder="e.g., abcc" value="abcc">
+        <div class="form-help">Enter the first string (lowercase letters only)</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">String t:</label>
+        <input type="text" class="form-input" id="inputT" placeholder="e.g., bccc" value="bccc">
+        <div class="form-help">Enter the second string (must be same length as s)</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Transformations:</label>
+        <div class="form-help" style="margin-bottom:10px;">Enter character transformations and their costs</div>
+        <div class="transform-inputs" id="transformInputs">
+          <div class="transform-row">
+            <div>
+              <label style="font-size:12px; color:#999;">From</label>
+              <input type="text" class="form-input transform-from" maxlength="1" placeholder="a" value="a">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#999;">To</label>
+              <input type="text" class="form-input transform-to" maxlength="1" placeholder="b" value="b">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#999;">Cost</label>
+              <input type="number" class="form-input transform-cost" min="0" placeholder="2" value="2">
+            </div>
+            <button class="btn-remove" onclick="removeTransform(this)">✕</button>
+          </div>
+          <div class="transform-row">
+            <div>
+              <input type="text" class="form-input transform-from" maxlength="1" placeholder="b" value="b">
+            </div>
+            <div>
+              <input type="text" class="form-input transform-to" maxlength="1" placeholder="c" value="c">
+            </div>
+            <div>
+              <input type="number" class="form-input transform-cost" min="0" placeholder="1" value="1">
+            </div>
+            <button class="btn-remove" onclick="removeTransform(this)">✕</button>
+          </div>
+          <div class="transform-row">
+            <div>
+              <input type="text" class="form-input transform-from" maxlength="1" placeholder="c" value="c">
+            </div>
+            <div>
+              <input type="text" class="form-input transform-to" maxlength="1" placeholder="a" value="a">
+            </div>
+            <div>
+              <input type="number" class="form-input transform-cost" min="0" placeholder="4" value="4">
+            </div>
+            <button class="btn-remove" onclick="removeTransform(this)">✕</button>
+          </div>
+        </div>
+        <button class="btn-add" onclick="addTransform()">+ Add Transformation</button>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-success" onclick="processInput()">✓ Process Input & Start</button>
+        <button class="btn btn-danger" onclick="clearInput()">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 1: Problem -->
+  <div class="content" id="tab1">
+    <div class="example-card">
+      <h3>Problem Statement</h3>
+      <p style="line-height:1.8; margin-bottom:15px;">
+        Given two strings <strong>s</strong> and <strong>t</strong> of the same length, and a set of character transformations with associated costs, 
+        find the minimum total cost to make both strings identical. If impossible, return -1.
+      </p>
+      
+      <div class="code-block" id="problemInput">
+        <strong>Your Input:</strong><br>
+        s = "abcc"<br>
+        t = "bccc"<br>
+        transformations = [['a','b'], ['b','c'], ['c','a']]<br>
+        costs = [2, 1, 4]
+      </div>
+      
+      <h3 style="margin-top:25px;">Strategy</h3>
+      <p style="line-height:1.8;">
+        For each position i, we can transform both s[i] and t[i] to any common target character. 
+        The key is finding the target that minimizes: <strong>cost(s[i]→target) + cost(t[i]→target)</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Tab 2: Graph -->
+  <div class="content" id="tab2">
+    <div class="example-card">
+      <h3>Transformation Graph</h3>
+      <p style="margin-bottom:20px;">Each character is a node, and each transformation is a directed edge with a cost.</p>
+      
+      <div class="graph-container" id="graphViz"></div>
+      
+      <div class="transform-list" id="transformList"></div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Matrix -->
+  <div class="content" id="tab3">
+    <div class="example-card">
+      <h3>Shortest Path Distance Matrix</h3>
+      <p style="margin-bottom:20px;">
+        Using Floyd-Warshall algorithm, we compute the minimum cost to transform from any character (row) to any other character (column).
+      </p>
+      
+      <div class="matrix-wrapper">
+        <div class="compact-matrix" id="distMatrix"></div>
+      </div>
+      
+      <div class="info-panel">
+        <div class="info-title">💡 How to Read This Matrix</div>
+        <div class="info-content">
+          • Row = Source character<br>
+          • Column = Target character<br>
+          • Cell value = Minimum cost to transform source to target<br>
+          • ∞ means no path exists<br>
+          • 0 on diagonal means transforming a character to itself costs nothing
+        </div>
+      </div>
+    </div>
+    </div>
+
+  <!-- Tab 4: Simulation -->
+  <div class="content" id="tab4">
+    <div class="step-indicator" id="stepIndicator">Ready to Start</div>
+    
+    <div class="strings-container">
+      <div class="string-box">
+        <div class="string-label">String s</div>
+        <div class="string-chars" id="stringS"></div>
+      </div>
+      
+      <div class="arrow">→</div>
+      
+      <div class="string-box">
+        <div class="string-label">Result</div>
+        <div class="string-chars" id="stringResult"></div>
+      </div>
+      
+      <div class="arrow">←</div>
+      
+      <div class="string-box">
+        <div class="string-label">String t</div>
+        <div class="string-chars" id="stringT"></div>
+      </div>
+    </div>
+
+    <div class="info-panel" id="simInfo">
+      <div class="info-title">
+        <span>📖</span>
+        <span>Instructions</span>
+      </div>
+      <div class="info-content">
+        Click <strong>"Next Step"</strong> to process each character position. The simulator will find the optimal target character that minimizes the total transformation cost for both strings.
+      </div>
+    </div>
+
+    <div class="cost-display">
+      <div class="cost-card">
+        <div class="cost-value" id="posCost">0</div>
+        <div class="cost-label">Position Cost</div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-value" id="totalCost">0</div>
+        <div class="cost-label">Total Cost</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-secondary" id="prevStepBtn" onclick="prevStep()">⏮ Previous</button>
+      <button class="btn btn-success" id="nextStepBtn" onclick="nextStep()">Next Step ⏭</button>
+      <button class="btn btn-primary" id="runAllBtn" onclick="runAll()">▶ Run All</button>
+      <button class="btn btn-danger" id="resetBtn" onclick="resetSimulation()">🔄 Reset</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Global variables for current problem
+  let s = "";
+  let t = "";
+  let transform = [];
+  let costArr = [];
+  let uniqueChars = [];
+  let charToIdx = {};
+  let n = 0;
+  let dist = [];
+  const INF = 1e9;
+
+  // Simulation state
+  let currentPos = -1;
+  let totalCostValue = 0;
+  let resultChars = [];
+  let positionHistory = [];
+  let autoRunInterval = null;
+
+  // Preset examples
+  const presets = {
+    1: {
+      s: "abcc",
+      t: "bccc",
+      transform: [['a','b'], ['b','c'], ['c','a']],
+      cost: [2, 1, 4]
+    },
+    2: {
+      s: "abc",
+      t: "cba",
+      transform: [['a','c'], ['c','b'], ['b','a']],
+      cost: [1, 2, 3]
+    },
+    3: {
+      s: "aabbcc",
+      t: "ccbbaa",
+      transform: [['a','b'], ['b','c'], ['c','a'], ['a','c']],
+      cost: [2, 1, 4, 3]
+    }
+  };
+
+  function loadPreset(num) {
+    const preset = presets[num];
+    document.getElementById('inputS').value = preset.s;
+    document.getElementById('inputT').value = preset.t;
+    
+    const container = document.getElementById('transformInputs');
+    container.innerHTML = '';
+    
+    preset.transform.forEach((tr, i) => {
+      const row = document.createElement('div');
+      row.className = 'transform-row';
+      row.innerHTML = `
+        <div>
+          ${i === 0 ? '<label style="font-size:12px; color:#999;">From</label>' : ''}
+          <input type="text" class="form-input transform-from" maxlength="1" value="${tr[0]}">
+        </div>
+        <div>
+          ${i === 0 ? '<label style="font-size:12px; color:#999;">To</label>' : ''}
+          <input type="text" class="form-input transform-to" maxlength="1" value="${tr[1]}">
+        </div>
+        <div>
+          ${i === 0 ? '<label style="font-size:12px; color:#999;">Cost</label>' : ''}
+          <input type="number" class="form-input transform-cost" min="0" value="${preset.cost[i]}">
+        </div>
+        <button class="btn-remove" onclick="removeTransform(this)">✕</button>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function addTransform() {
+    const container = document.getElementById('transformInputs');
+    const row = document.createElement('div');
+    row.className = 'transform-row';
+    row.innerHTML = `
+      <div>
+        <input type="text" class="form-input transform-from" maxlength="1" placeholder="a">
+      </div>
+      <div>
+        <input type="text" class="form-input transform-to" maxlength="1" placeholder="b">
+      </div>
+      <div>
+        <input type="number" class="form-input transform-cost" min="0" placeholder="1">
+      </div>
+      <button class="btn-remove" onclick="removeTransform(this)">✕</button>
+    `;
+    container.appendChild(row);
+  }
+
+  function removeTransform(btn) {
+    const container = document.getElementById('transformInputs');
+    if(container.children.length > 1) {
+      btn.parentElement.remove();
+    } else {
+      showError("At least one transformation is required!");
+    }
+  }
+
+  function clearInput() {
+    document.getElementById('inputS').value = '';
+    document.getElementById('inputT').value = '';
+    const container = document.getElementById('transformInputs');
+    container.innerHTML = `
+      <div class="transform-row">
+        <div>
+          <label style="font-size:12px; color:#999;">From</label>
+          <input type="text" class="form-input transform-from" maxlength="1" placeholder="a">
+        </div>
+        <div>
+          <label style="font-size:12px; color:#999;">To</label>
+          <input type="text" class="form-input transform-to" maxlength="1" placeholder="b">
+        </div>
+        <div>
+          <label style="font-size:12px; color:#999;">Cost</label>
+          <input type="number" class="form-input transform-cost" min="0" placeholder="1">
+        </div>
+        <button class="btn-remove" onclick="removeTransform(this)">✕</button>
+      </div>
+    `;
+    hideError();
+  }
+
+  function showError(message) {
+    const errorEl = document.getElementById('errorMessage');
+    errorEl.textContent = message;
+    errorEl.classList.add('show');
+  }
+
+  function hideError() {
+    const errorEl = document.getElementById('errorMessage');
+    errorEl.classList.remove('show');
+  }
+
+  function validateInput() {
+    s = document.getElementById('inputS').value.trim().toLowerCase();
+    t = document.getElementById('inputT').value.trim().toLowerCase();
+
+    // Validate strings
+    if(!s || !t) {
+      showError("Both strings s and t are required!");
+      return false;
+    }
+
+    if(s.length !== t.length) {
+      showError("Strings s and t must have the same length!");
+      return false;
+    }
+
+    if(!/^[a-z]+$/.test(s) || !/^[a-z]+$/.test(t)) {
+      showError("Strings must contain only lowercase letters (a-z)!");
+      return false;
+    }
+
+    // Get transformations
+    const rows = document.querySelectorAll('.transform-row');
+    transform = [];
+    costArr = [];
+
+    for(let row of rows) {
+      const from = row.querySelector('.transform-from').value.trim().toLowerCase();
+      const to = row.querySelector('.transform-to').value.trim().toLowerCase();
+      const cost = row.querySelector('.transform-cost').value.trim();
+
+      if(!from || !to || !cost) {
+        showError("All transformation fields must be filled!");
+        return false;
+      }
+
+      if(!/^[a-z]$/.test(from) || !/^[a-z]$/.test(to)) {
+        showError("Transformation characters must be single lowercase letters (a-z)!");
+        return false;
+      }
+
+      const costNum = parseInt(cost);
+      if(isNaN(costNum) || costNum < 0) {
+        showError("Costs must be non-negative numbers!");
+        return false;
+      }
+
+      transform.push([from, to]);
+      costArr.push(costNum);
+    }
+
+    if(transform.length === 0) {
+      showError("At least one transformation is required!");
+      return false;
+    }
+
+    return true;
+  }
+
+  function processInput() {
+    hideError();
+    
+    if(!validateInput()) {
+      return;
+    }
+
+    // Initialize problem data
+    uniqueChars = [...new Set([...s, ...t, ...transform.flat()])].sort();
+    charToIdx = {};
+    uniqueChars.forEach((c, i) => charToIdx[c] = i);
+    n = uniqueChars.length;
+
+    // Initialize distance matrix
+    dist = Array.from({length:n}, ()=>Array(n).fill(INF));
+    for(let i=0; i<n; i++) dist[i][i] = 0;
+    transform.forEach((tr, idx) => {
+      const u = charToIdx[tr[0]], v = charToIdx[tr[1]];
+      dist[u][v] = Math.min(dist[u][v], costArr[idx]);
+    });
+
+    // Compute shortest paths
+    computeShortestPaths();
+
+    // Enable other tabs
+    document.getElementById('tab1Btn').disabled = false;
+    document.getElementById('tab2Btn').disabled = false;
+    document.getElementById('tab3Btn').disabled = false;
+    document.getElementById('tab4Btn').disabled = false;
+
+    // Update problem display
+    updateProblemDisplay();
+
+    // Show success message and move to next tab
+    showTab(1);
+  }
+
+  function updateProblemDisplay() {
+    const problemInput = document.getElementById('problemInput');
+    const transformStr = transform.map(tr => `['${tr[0]}','${tr[1]}']`).join(', ');
+    const costStr = costArr.join(', ');
+    
+    problemInput.innerHTML = `
+      <strong>Your Input:</strong><br>
+      s = "<span class="highlight">${s}</span>"<br>
+      t = "<span class="highlight">${t}</span>"<br>
+      transformations = [${transformStr}]<br>
+      costs = [${costStr}]
+    `;
+  }
+
+  // Compute Floyd-Warshall
+  function computeShortestPaths() {
+    for(let k=0; k<n; k++) {
+      for(let i=0; i<n; i++) {
+        for(let j=0; j<n; j++) {
+          if(dist[i][k] < INF && dist[k][j] < INF) {
+            dist[i][j] = Math.min(dist[i][j], dist[i][k] + dist[k][j]);
+          }
+        }
+      }
+    }
+  }
+
+  // Tab navigation
+  function showTab(index) {
+    document.querySelectorAll('.tab').forEach((tab, i) => {
+      tab.classList.toggle('active', i === index);
+    });
+    document.querySelectorAll('.content').forEach((content, i) => {
+      content.classList.toggle('active', i === index);
+    });
+    
+    if(index === 2) drawGraph();
+    if(index === 3) renderDistanceMatrix();
+    if(index === 4) initSimulation();
+  }
+
+  // Draw graph visualization
+  function drawGraph() {
+    const container = document.getElementById('graphViz');
+    container.innerHTML = '';
+    
+    // Node positions (circular layout)
+    const positions = {};
+    const centerX = 300, centerY = 200, radius = 120;
+    uniqueChars.forEach((c, i) => {
+      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      positions[c] = {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle)
+      };
+    });
+
+    // Draw edges
+    transform.forEach((tr, idx) => {
+      const from = positions[tr[0]], to = positions[tr[1]];
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const angle = Math.atan2(dy, dx);
+      const length = Math.sqrt(dx*dx + dy*dy) - 70;
+      
+      const edge = document.createElement('div');
+      edge.className = 'graph-edge';
+      edge.style.left = (from.x + 35) + 'px';
+      edge.style.top = (from.y + 35) + 'px';
+      edge.style.width = length + 'px';
+      edge.style.transform = `rotate(${angle}rad)`;
+      container.appendChild(edge);
+
+      const label = document.createElement('div');
+      label.className = 'edge-cost';
+      label.textContent = costArr[idx];
+      label.style.left = ((from.x + to.x) / 2 + 20) + 'px';
+      label.style.top = ((from.y + to.y) / 2 + 20) + 'px';
+      container.appendChild(label);
+    });
+
+    // Draw nodes
+    uniqueChars.forEach(c => {
+      const node = document.createElement('div');
+      node.className = 'graph-node';
+      node.textContent = c;
+      node.style.left = positions[c].x + 'px';
+      node.style.top = positions[c].y + 'px';
+      container.appendChild(node);
+    });
+
+    // Draw transformation list
+    const list = document.getElementById('transformList');
+    list.innerHTML = '<h4 style="color:#76c7f5; margin-bottom:15px;">Available Transformations:</h4>';
+    transform.forEach((tr, idx) => {
+      const item = document.createElement('div');
+      item.className = 'transform-item';
+      item.innerHTML = `
+        <span style="font-size:20px;">${tr[0]}</span>
+        <span style="color:#76c7f5;">→</span>
+        <span style="font-size:20px;">${tr[1]}</span>
+        <span style="margin-left:auto; background:#ffeb3b; color:#000; padding:4px 12px; border-radius:6px; font-weight:bold;">Cost: ${costArr[idx]}</span>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  // Render distance matrix
+  function renderDistanceMatrix() {
+    const matrix = document.getElementById('distMatrix');
+    matrix.innerHTML = '';
+    matrix.style.gridTemplateColumns = `repeat(${n + 1}, 60px)`;
+    
+    // Top-left corner
+    const corner = document.createElement('div');
+    corner.className = 'matrix-cell matrix-header';
+    corner.textContent = '→';
+    matrix.appendChild(corner);
+    
+    // Column headers
+    uniqueChars.forEach(c => {
+      const cell = document.createElement('div');
+      cell.className = 'matrix-cell matrix-header';
+      cell.textContent = c;
+      matrix.appendChild(cell);
+    });
+    
+    // Rows
+    for(let i = 0; i < n; i++) {
+      const rowHeader = document.createElement('div');
+      rowHeader.className = 'matrix-cell matrix-header';
+      rowHeader.textContent = uniqueChars[i];
+      matrix.appendChild(rowHeader);
+      
+      for(let j = 0; j < n; j++) {
+        const cell = document.createElement('div');
+        cell.className = 'matrix-cell';
+        cell.textContent = dist[i][j] >= INF ? '∞' : dist[i][j];
+        cell.id = `matrix-${i}-${j}`;
+        matrix.appendChild(cell);
+      }
+    }
+  }
+
+  // Initialize simulation
+  function initSimulation() {
+    currentPos = -1;
+    totalCostValue = 0;
+    resultChars = Array(s.length).fill('?');
+    positionHistory = [];
+    
+    renderStrings();
+    updateSimInfo('Click "Next Step" to begin processing each position.', 'Instructions');
+    document.getElementById('posCost').textContent = '0';
+    document.getElementById('totalCost').textContent = '0';
+    document.getElementById('stepIndicator').textContent = 'Ready to Start';
+    document.getElementById('prevStepBtn').disabled = true;
+    document.getElementById('nextStepBtn').disabled = false;
+    document.getElementById('nextStepBtn').textContent = 'Next Step ⏭';
+  }
+
+  // Render strings
+  function renderStrings() {
+    const sContainer = document.getElementById('stringS');
+    const tContainer = document.getElementById('stringT');
+    const rContainer = document.getElementById('stringResult');
+    
+    sContainer.innerHTML = '';
+    tContainer.innerHTML = '';
+    rContainer.innerHTML = '';
+    
+    for(let i = 0; i < s.length; i++) {
+      const sChar = document.createElement('div');
+      sChar.className = 'char';
+      sChar.textContent = s[i];
+      if(i === currentPos) sChar.classList.add('active', 'processing');
+      else if(i < currentPos) sChar.classList.add('done');
+      sContainer.appendChild(sChar);
+      
+      const tChar = document.createElement('div');
+      tChar.className = 'char';
+      tChar.textContent = t[i];
+      if(i === currentPos) tChar.classList.add('active', 'processing');
+      else if(i < currentPos) tChar.classList.add('done');
+      tContainer.appendChild(tChar);
+      
+      const rChar = document.createElement('div');
+      rChar.className = 'char';
+      rChar.textContent = resultChars[i];
+      if(i === currentPos) rChar.classList.add('active', 'processing');
+      else if(i < currentPos) rChar.classList.add('done');
+      rContainer.appendChild(rChar);
+    }
+  }
+
+  // Update simulation info
+  function updateSimInfo(message, title = 'Processing') {
+    document.getElementById('simInfo').innerHTML = `
+      <div class="info-title">
+        <span>${title === 'Complete' ? '✅' : title === 'Error' ? '❌' : title === 'Impossible' ? '⛔' : '⚙️'}</span>
+        <span>${title}</span>
+      </div>
+      <div class="info-content">${message}</div>
+    `;
+  }
+
+  // Find best target for a position
+  function findBestTarget(sChar, tChar) {
+    const sIdx = charToIdx[sChar];
+    const tIdx = charToIdx[tChar];
+    
+    let minCost = INF;
+    let bestTarget = null;
+    let bestTargetIdx = -1;
+    
+    for(let targetIdx = 0; targetIdx < n; targetIdx++) {
+      const costFromS = dist[sIdx][targetIdx];
+      const costFromT = dist[tIdx][targetIdx];
+      
+      if(costFromS < INF && costFromT < INF) {
+        const totalCost = costFromS + costFromT;
+        if(totalCost < minCost) {
+          minCost = totalCost;
+          bestTarget = uniqueChars[targetIdx];
+          bestTargetIdx = targetIdx;
+        }
+      }
+    }
+    
+    return { target: bestTarget, cost: minCost, sIdx, tIdx, targetIdx: bestTargetIdx };
+  }
+
+  // Next step
+  function nextStep() {
+    if(autoRunInterval) {
+      clearInterval(autoRunInterval);
+      autoRunInterval = null;
+      document.getElementById('runAllBtn').innerHTML = '▶ Run All';
+    }
+    
+    if(currentPos >= s.length - 1) {
+      if(currentPos === s.length - 1) {
+        currentPos++;
+        renderStrings();
+        updateSimInfo(
+          `All positions processed successfully!<br><br>
+          <strong>Final Result:</strong> "${resultChars.join('')}"<br>
+          <strong>Total Minimum Cost:</strong> <span style="color:#4CAF50; font-size:20px;">${totalCostValue}</span>`,
+          'Complete'
+        );
+        document.getElementById('stepIndicator').textContent = '✅ Transformation Complete';
+        document.getElementById('nextStepBtn').disabled = true;
+      }
+      return;
+    }
+    
+    currentPos++;
+    const sChar = s[currentPos];
+    const tChar = t[currentPos];
+    
+    const result = findBestTarget(sChar, tChar);
+    
+    if(result.cost >= INF) {
+      renderStrings();
+      updateSimInfo(
+        `<strong>Transformation Impossible!</strong><br><br>
+        Cannot transform '<strong>${sChar}</strong>' and '<strong>${tChar}</strong>' to a common character at position ${currentPos}.<br><br>
+        No valid transformation path exists between these characters.<br><br>
+        <strong>Result:</strong> <span style="color:#f44336; font-size:20px;">-1</span>`,
+        'Impossible'
+      );
+      document.getElementById('stepIndicator').textContent = '⛔ Transformation Impossible';
+      document.getElementById('nextStepBtn').disabled = true;
+      document.getElementById('totalCost').textContent = '-1';
+      document.getElementById('totalCost').style.color = '#f44336';
+      return;
+    }
+    
+    resultChars[currentPos] = result.target;
+    const posCost = result.cost;
+    totalCostValue += posCost;
+    
+    positionHistory.push({
+      pos: currentPos,
+      sChar, tChar,
+      target: result.target,
+      cost: posCost
+    });
+    
+    renderStrings();
+    
+    const costFromS = dist[result.sIdx][result.targetIdx];
+    const costFromT = dist[result.tIdx][result.targetIdx];
+    
+    let explanation = `<strong>Position ${currentPos}:</strong><br><br>`;
+    
+    if(sChar === tChar) {
+      explanation += `Characters are already the same: '<strong>${sChar}</strong>' = '<strong>${tChar}</strong>'<br>`;
+      explanation += `No transformation needed!<br><br>`;
+      explanation += `<strong>Position Cost:</strong> 0<br>`;
+    } else if(sChar === result.target && tChar === result.target) {
+      explanation += `Both already at optimal target '<strong>${result.target}</strong>'<br><br>`;
+      explanation += `<strong>Position Cost:</strong> 0<br>`;
+    } else if(sChar === result.target) {
+      explanation += `'<strong>${sChar}</strong>' is already at target<br>`;
+      explanation += `Transform '<strong>${tChar}</strong>' → '<strong>${result.target}</strong>' (cost: ${costFromT})<br><br>`;
+      explanation += `<strong>Position Cost:</strong> ${posCost}<br>`;
+    } else if(tChar === result.target) {
+      explanation += `Transform '<strong>${sChar}</strong>' → '<strong>${result.target}</strong>' (cost: ${costFromS})<br>`;
+      explanation += `'<strong>${tChar}</strong>' is already at target<br><br>`;
+      explanation += `<strong>Position Cost:</strong> ${posCost}<br>`;
+    } else {
+      explanation += `Transform '<strong>${sChar}</strong>' → '<strong>${result.target}</strong>' (cost: ${costFromS})<br>`;
+      explanation += `Transform '<strong>${tChar}</strong>' → '<strong>${result.target}</strong>' (cost: ${costFromT})<br><br>`;
+      explanation += `<strong>Position Cost:</strong> ${costFromS} + ${costFromT} = ${posCost}<br>`;
+    }
+    
+    explanation += `<strong>Running Total:</strong> ${totalCostValue}`;
+    
+    updateSimInfo(explanation, 'Step ' + (currentPos + 1));
+    
+    document.getElementById('posCost').textContent = posCost;
+    document.getElementById('totalCost').textContent = totalCostValue;
+    document.getElementById('totalCost').style.color = '#4CAF50';
+    document.getElementById('stepIndicator').textContent = `Processing Position ${currentPos + 1} of ${s.length}`;
+    document.getElementById('prevStepBtn').disabled = false;
+    
+    if(currentPos === s.length - 1) {
+      document.getElementById('nextStepBtn').textContent = 'Finish ✓';
+    }
+  }
+
+  // Previous step
+  function prevStep() {
+    if(currentPos <= 0) return;
+    
+    if(autoRunInterval) {
+      clearInterval(autoRunInterval);
+      autoRunInterval = null;
+      document.getElementById('runAllBtn').innerHTML = '▶ Run All';
+    }
+    
+    const lastStep = positionHistory.pop();
+    if(lastStep) {
+      totalCostValue -= lastStep.cost;
+      resultChars[currentPos] = '?';
+      currentPos--;
+      
+      renderStrings();
+      
+      if(currentPos >= 0) {
+        const prevStep = positionHistory[positionHistory.length - 1];
+        if(prevStep) {
+          const sChar = prevStep.sChar;
+          const tChar = prevStep.tChar;
+          const result = findBestTarget(sChar, tChar);
+          const costFromS = dist[result.sIdx][result.targetIdx];
+          const costFromT = dist[result.tIdx][result.targetIdx];
+          
+          let explanation = `<strong>Position ${prevStep.pos}:</strong><br><br>`;
+          
+          if(sChar === tChar) {
+            explanation += `Characters are already the same: '<strong>${sChar}</strong>' = '<strong>${tChar}</strong>'<br>`;
+            explanation += `No transformation needed!<br><br>`;
+            explanation += `<strong>Position Cost:</strong> 0<br>`;
+          } else {
+            explanation += `Transform '<strong>${sChar}</strong>' → '<strong>${prevStep.target}</strong>' (cost: ${costFromS})<br>`;
+            explanation += `Transform '<strong>${tChar}</strong>' → '<strong>${prevStep.target}</strong>' (cost: ${costFromT})<br><br>`;
+            explanation += `<strong>Position Cost:</strong> ${prevStep.cost}<br>`;
+          }
+          
+          explanation += `<strong>Running Total:</strong> ${totalCostValue}`;
+          
+          updateSimInfo(explanation, 'Step ' + (prevStep.pos + 1));
+          document.getElementById('posCost').textContent = prevStep.cost;
+        }
+      } else {
+        updateSimInfo('Click "Next Step" to begin processing each position.', 'Instructions');
+        document.getElementById('posCost').textContent = '0';
+      }
+      
+      document.getElementById('totalCost').textContent = totalCostValue;
+      document.getElementById('totalCost').style.color = '#4CAF50';
+      document.getElementById('stepIndicator').textContent = currentPos < 0 ? 'Ready to Start' : `Processing Position ${currentPos + 1} of ${s.length}`;
+      document.getElementById('prevStepBtn').disabled = currentPos < 0;
+      document.getElementById('nextStepBtn').disabled = false;
+      document.getElementById('nextStepBtn').textContent = 'Next Step ⏭';
+    }
+  }
+
+  // Run all steps
+  function runAll() {
+    if(autoRunInterval) {
+      clearInterval(autoRunInterval);
+      autoRunInterval = null;
+      document.getElementById('runAllBtn').innerHTML = '▶ Run All';
+      return;
+    }
+    
+    document.getElementById('runAllBtn').innerHTML = '⏸ Pause';
+    autoRunInterval = setInterval(() => {
+      if(currentPos >= s.length - 1) {
+        clearInterval(autoRunInterval);
+        autoRunInterval = null;
+        document.getElementById('runAllBtn').innerHTML = '▶ Run All';
+        if(currentPos === s.length - 1) nextStep();
+        return;
+      }
+      nextStep();
+    }, 1000);
+  }
+
+  // Reset simulation
+  function resetSimulation() {
+    if(autoRunInterval) {
+      clearInterval(autoRunInterval);
+      autoRunInterval = null;
+    }
+    
+    document.getElementById('runAllBtn').innerHTML = '▶ Run All';
+    document.getElementById('nextStepBtn').disabled = false;
+    document.getElementById('nextStepBtn').textContent = 'Next Step ⏭';
+    initSimulation();
+  }
+
+  // Initialize on load
+  window.onload = () => {
+    // Tabs are initially disabled except input tab
+    document.getElementById('tab1Btn').disabled = true;
+    document.getElementById('tab2Btn').disabled = true;
+    document.getElementById('tab3Btn').disabled = true;
+    document.getElementById('tab4Btn').disabled = true;
+  };
+</script>
+</body>
+</html>

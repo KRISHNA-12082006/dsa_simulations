@@ -1,0 +1,25 @@
+[
+    {
+        "topic": "Dynamic Programming",
+        "subtopics": [
+            {
+                "subtopic": "0/1 Knapsack",
+                "questions": [
+                    {"title": "Visualize 0/1 Knapsack", "link": "dp/knapsack_dp_simulator"},
+                    {"title": "Make Strings Equal", "link": "dp/make_strings_equal"}
+                ]
+            }
+        ]
+    },
+    {
+        "topic": "Basic Data Structures",
+        "subtopics": [
+            {
+                "subtopic": "Hash Map",
+                "questions": [
+                    {"title": "Two Sum Problem", "link": "basic_data_structures/two-sum-problem"}
+                ]
+            }
+        ]
+    }
+]

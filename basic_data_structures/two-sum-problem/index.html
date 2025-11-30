@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Two Sum – Visual Algorithm Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    h1 { color: #76c7f5; text-align: center; margin: 20px 0; }
+
+    .slider-container {
+      width: 100vw;
+      height: calc(100vh - 80px);
+      position: relative;
+      overflow: hidden;
+    }
+    .slides {
+      display: flex;
+      width: 300vw;
+      height: 100%;
+      transition: transform 0.6s ease-in-out;
+    }
+    .slide {
+      width: 100vw;
+      padding: 40px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .slide h2 { color: #76c7f5; margin-bottom: 16px; }
+    .slide p, .slide ul {
+      line-height: 1.6;
+      font-size: 18px;
+    }
+
+    .nav-buttons {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      z-index: 100;
+    }
+    .nav-buttons button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .nav-buttons .prev { background: #9C27B0; color: white; }
+    .nav-buttons .next { background: #2196F3; color: white; }
+
+    .nav-buttons button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .nav-buttons button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .array-container {
+      display: flex;
+      gap: 8px;
+      margin: 20px 0;
+    }
+    .array-cell {
+      width: 70px;
+      height: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 3px solid #555;
+      border-radius: 8px;
+      background: #1b1b1b;
+      transition: 0.3s;
+    }
+    .array-index {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+    .array-value {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .highlight-current { background: #ffeb3b; color: #000; border-color: #ffeb3b; }
+    .highlight-checking { background: #ff9800; color: #000; border-color: #ff9800; }
+    .highlight-found { background: #4caf50; color: #fff; border-color: #4caf50; }
+
+    .hashmap-container {
+      padding: 20px;
+      border: 2px solid #76c7f5;
+      border-radius: 8px;
+      background: #161616;
+      min-width: 300px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .hashmap-title {
+      font-weight: bold;
+      color: #76c7f5;
+      margin-bottom: 12px;
+      text-align: center;
+      font-size: 18px;
+    }
+    .hashmap-entry {
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #222;
+      display: flex;
+      justify-content: space-between;
+    }
+    .hashmap-key { color: #ffe97d; font-weight: bold; }
+    .hashmap-value { color: #76c7f5; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .controls button {
+      padding: 12px 22px;
+      border: none;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    #stepBtn { background: #4CAF50; color: white; }
+    #runBtn { background: #2196F3; color: white; }
+    #prevBtn { background: #9C27B0; color: white; }
+    #resetBtn { background: #f44336; color: white; }
+
+    .info-box {
+      padding: 15px;
+      border: 2px solid #76c7f5;
+      border-radius: 8px;
+      min-width: 400px;
+      background: #161616;
+      font-size: 16px;
+    }
+    .info-title {
+      font-weight: bold;
+      color: #76c7f5;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 18px;
+    }
+    .info-content {
+      line-height: 1.8;
+    }
+    .highlight { color: #ffe97d; font-weight: bold; }
+
+    .input-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px solid #555;
+      border-radius: 8px;
+      background: #161616;
+    }
+    .input-section label {
+      display: block;
+      margin-bottom: 8px;
+      color: #76c7f5;
+      font-weight: bold;
+    }
+    .input-section input {
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #555;
+      border-radius: 4px;
+      background: #1b1b1b;
+      color: #e0e0e0;
+      width: 300px;
+      margin-right: 10px;
+    }
+    .input-section button {
+      padding: 10px 20px;
+      border: none;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #2196F3;
+      color: white;
+    }
+
+    code {
+      background: #222;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #ffe97d;
+    }
+
+  </style>
+</head>
+<body>
+
+<h1>Two Sum – Visual Algorithm Simulator</h1>
+
+<div class="slider-container">
+  <div class="slides" id="slides">
+
+    <!-- Slide 1: Question -->
+    <div class="slide" id="slide-question">
+      <h2>Question — Samasya Kya Hai?</h2>
+      <p>Humare paas ek array of integers hai aur ek <strong>target</strong> integer hai. Humein array mein se <strong>do numbers</strong> dhundhne hain jinki sum exactly target ke barabar ho.</p>
+      
+      <p><strong>Problem Statement:</strong></p>
+      <p>Given an array of integers <code>nums</code> and an integer <code>target</code>, return <em>indices of the two numbers such that they add up to target</em>.</p>
+      
+      <p><strong>Constraints:</strong></p>
+      <ul>
+        <li>Each input has <strong>exactly one solution</strong></li>
+        <li>Same element cannot be used twice</li>
+        <li>Answer can be returned in any order</li>
+      </ul>
+
+      <p><strong>Example 1:</strong></p>
+      <code>
+        Input: nums = [2, 7, 11, 15], target = 9<br>
+        Output: [0, 1]<br>
+        Explanation: nums[0] + nums[1] = 2 + 7 = 9
+      </code>
+
+      <p style="margin-top: 15px;"><strong>Example 2:</strong></p>
+      <code>
+        Input: nums = [3, 2, 4], target = 6<br>
+        Output: [1, 2]<br>
+        Explanation: nums[1] + nums[2] = 2 + 4 = 6
+      </code>
+    </div>
+
+    <!-- Slide 2: Approach / Explanation -->
+    <div class="slide" id="slide-approach">
+      <h2>Approach — Hash Map (Optimal Solution)</h2>
+      
+      <h3 style="color: #ff9800;">Brute Force (Naive Approach)</h3>
+      <p>Sabse pehla tarika jo dimag mein aata hai wo hai <strong>nested loops</strong> use karna:</p>
+      <ul>
+        <li>Har element ke liye, uske baad wale saare elements check karo</li>
+        <li>Agar koi pair mil jaye jiska sum = target, to return karo</li>
+        <li><strong>Time Complexity:</strong> O(n²) — bahut slow for large arrays</li>
+        <li><strong>Space Complexity:</strong> O(1)</li>
+      </ul>
+
+      <h3 style="color: #4caf50; margin-top: 30px;">Optimal Approach: Hash Map</h3>
+      <p>Hum ek <strong>hash map (dictionary)</strong> use karenge jo already dekhe hue numbers ko store karega:</p>
+      
+      <p><strong>Algorithm:</strong></p>
+      <ol style="line-height: 2;">
+        <li>Ek empty hash map banao</li>
+        <li>Array ko traverse karo (har element ke liye):
+          <ul>
+            <li>Calculate <code>complement = target - current_number</code></li>
+            <li>Check karo: kya ye complement pehle se hash map mein hai?
+              <ul>
+                <li><strong>Agar hai:</strong> Match mil gaya! Return karo [complement_index, current_index]</li>
+                <li><strong>Agar nahi:</strong> Current number ko hash map mein store karo</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ol>
+
+      <p><strong>Why Hash Map?</strong></p>
+      <ul>
+        <li>Hash map mein lookup operation O(1) time mein hoti hai (average case)</li>
+        <li>Hum ek hi pass mein solution dhundh sakte hain</li>
+        <li>Previously seen elements ko efficiently track kar sakte hain</li>
+      </ul>
+
+      <p><strong>Complexity Analysis:</strong></p>
+      <ul>
+        <li><strong>Time Complexity:</strong> O(n) — sirf ek baar array traverse karna hai</li>
+        <li><strong>Space Complexity:</strong> O(n) — worst case mein saare elements hash map mein store ho sakte hain</li>
+      </ul>
+
+      <p style="margin-top: 20px;"><strong>Key Insight:</strong> Jab hum current element dekh rahe hain, hum ye nahi soch rahe ki "iske saath kaun add hoga", balki ye soch rahe hain ki "kya wo number jo iske saath add hokar target banayega, pehle aa chuka hai?"</p>
+    </div>
+
+    <!-- Slide 3: Example + Simulation -->
+    <div class="slide" id="slide-sim">
+      <h2>Interactive Simulation</h2>
+
+      <div class="input-section">
+        <label>Array (comma-separated):</label>
+        <input type="text" id="arrayInput" value="2, 7, 11, 15" />
+        <label style="margin-top: 10px;">Target:</label>
+        <input type="text" id="targetInput" value="9" />
+        <button onclick="updateInputs()">Update & Reset</button>
+      </div>
+
+      <div style="margin: 20px 0;">
+        <strong style="color: #76c7f5;">Target: </strong>
+        <span id="targetDisplay" style="font-size: 24px; color: #ffe97d;">9</span>
+      </div>
+
+      <div id="arrayDisplay"></div>
+
+      <div class="main-container">
+        <div class="hashmap-container">
+          <div class="hashmap-title">Hash Map (Value → Index)</div>
+          <div id="hashmapContent">Empty</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Step Explanation</div>
+          <div id="stepExplanation" class="info-content">
+            Click "Next Step" to begin the simulation.
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="prevBtn">Previous Step</button>
+        <button id="stepBtn">Next Step</button>
+        <button id="runBtn">Run All</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <button class="prev" id="navPrevBtn" onclick="prevSlide()">‹ Back</button>
+    <button class="next" id="navNextBtn" onclick="nextSlide()">Forward ›</button>
+  </div>
+</div>
+
+<script>
+  // Slide navigation logic
+  const slides = document.getElementById("slides");
+  let currentSlide = 0;
+  const totalSlides = 3;
+
+  function updateSlide() {
+    slides.style.transform = `translateX(-${currentSlide * 100}vw)`;
+    document.getElementById('navPrevBtn').disabled = currentSlide === 0;
+    document.getElementById('navNextBtn').disabled = currentSlide === totalSlides - 1;
+  }
+
+  function showSlide(idx) {
+    currentSlide = idx;
+    updateSlide();
+  }
+
+  function nextSlide() {
+    if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      updateSlide();
+    }
+  }
+
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateSlide();
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') prevSlide();
+    if (e.key === 'ArrowRight') nextSlide();
+  });
+
+  // Two Sum Simulation Logic
+  let nums = [2, 7, 11, 15];
+  let target = 9;
+  let currentIndex = 0;
+  let hashMap = {};
+  let found = false;
+  let foundIndices = [];
+  let autoRun = null;
+  let history = [];
+
+  function updateInputs() {
+    const arrayInput = document.getElementById('arrayInput').value;
+    const targetInput = document.getElementById('targetInput').value;
+    
+    nums = arrayInput.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+    target = parseInt(targetInput);
+    
+    if (nums.length === 0 || isNaN(target)) {
+      alert('Please enter valid numbers');
+      return;
+    }
+    
+    document.getElementById('targetDisplay').textContent = target;
+    resetSimulation();
+  }
+
+  function resetSimulation() {
+    currentIndex = 0;
+    hashMap = {};
+    found = false;
+    foundIndices = [];
+    history = [];
+    if (autoRun) {
+      clearInterval(autoRun);
+      autoRun = null;
+    }
+    renderArray();
+    renderHashMap();
+    document.getElementById('stepExplanation').innerHTML = 'Click "Next Step" to begin the simulation.';
+  }
+
+  function renderArray(highlightCurrent = -1, highlightChecking = -1, highlightFound = []) {
+    const container = document.getElementById('arrayDisplay');
+    container.innerHTML = '';
+    container.className = 'array-container';
+    
+    nums.forEach((num, idx) => {
+      const cell = document.createElement('div');
+      cell.className = 'array-cell';
+      
+      if (highlightFound.includes(idx)) {
+        cell.classList.add('highlight-found');
+      } else if (idx === highlightCurrent) {
+        cell.classList.add('highlight-current');
+      } else if (idx === highlightChecking) {
+        cell.classList.add('highlight-checking');
+      }
+      
+      cell.innerHTML = `
+        <div class="array-index">index: ${idx}</div>
+        <div class="array-value">${num}</div>
+      `;
+      container.appendChild(cell);
+    });
+  }
+
+  function renderHashMap() {
+    const container = document.getElementById('hashmapContent');
+    const entries = Object.entries(hashMap);
+    
+    if (entries.length === 0) {
+      container.innerHTML = '<div style="text-align: center; color: #999;">Empty</div>';
+      return;
+    }
+    
+    container.innerHTML = entries.map(([key, value]) => `
+      <div class="hashmap-entry">
+        <span class="hashmap-key">${key}</span>
+        <span>→</span>
+        <span class="hashmap-value">index ${value}</span>
+      </div>
+    `).join('');
+  }
+
+  function nextStep() {
+    if (found || currentIndex >= nums.length) {
+      return;
+    }
+
+    const currentNum = nums[currentIndex];
+    const complement = target - currentNum;
+    
+    // Save state to history
+    history.push({
+      index: currentIndex,
+      hashMap: {...hashMap},
+      found: found,
+      foundIndices: [...foundIndices]
+    });
+
+    let explanation = '';
+    
+    if (hashMap.hasOwnProperty(complement)) {
+      // Found the pair!
+      found = true;
+      foundIndices = [hashMap[complement], currentIndex];
+      
+      renderArray(-1, -1, foundIndices);
+      
+      explanation = `
+        <strong style="color: #4caf50;">✓ SOLUTION FOUND!</strong><br><br>
+        <strong>Current Index:</strong> ${currentIndex}<br>
+        <strong>Current Number:</strong> ${currentNum}<br>
+        <strong>Complement Needed:</strong> ${complement}<br><br>
+        <strong>✓ Complement ${complement} exists in hash map at index ${hashMap[complement]}</strong><br><br>
+        <strong class="highlight">Answer: [${hashMap[complement]}, ${currentIndex}]</strong><br><br>
+        Because nums[${hashMap[complement]}] + nums[${currentIndex}] = ${nums[hashMap[complement]]} + ${currentNum} = ${target}
+      `;
+      
+    } else {
+      // Not found, add to hash map
+      hashMap[currentNum] = currentIndex;
+      
+      renderArray(currentIndex);
+      
+      explanation = `
+        <strong>Step ${currentIndex + 1}:</strong><br><br>
+        <strong>Current Index:</strong> ${currentIndex}<br>
+        <strong>Current Number:</strong> ${currentNum}<br>
+        <strong>Complement Needed:</strong> ${target} - ${currentNum} = <span class="highlight">${complement}</span><br><br>
+        <strong>Check:</strong> Is ${complement} in hash map?<br>
+        <strong>Result:</strong> ✗ No<br><br>
+        <strong>Action:</strong> Add ${currentNum} → index ${currentIndex} to hash map<br>
+        Continue to next element...
+      `;
+      
+      currentIndex++;
+    }
+    
+    renderHashMap();
+    document.getElementById('stepExplanation').innerHTML = explanation;
+  }
+
+  function prevStep() {
+    if (history.length === 0) return;
+    
+    const prevState = history.pop();
+    currentIndex = prevState.index;
+    hashMap = prevState.hashMap;
+    found = prevState.found;
+    foundIndices = prevState.foundIndices;
+    
+    renderArray(currentIndex);
+    renderHashMap();
+    
+    document.getElementById('stepExplanation').innerHTML = `
+      <strong>Stepped back to index ${currentIndex}</strong><br><br>
+      Click "Next Step" to proceed forward.
+    `;
+  }
+
+  function runAll() {
+    if (autoRun) return;
+    autoRun = setInterval(() => {
+      if (found || currentIndex >= nums.length) {
+        clearInterval(autoRun);
+        autoRun = null;
+        return;
+      }
+      nextStep();
+    }, 1000);
+  }
+
+  document.getElementById('stepBtn').onclick = nextStep;
+  document.getElementById('prevBtn').onclick = prevStep;
+  document.getElementById('runBtn').onclick = runAll;
+  document.getElementById('resetBtn').onclick = resetSimulation;
+
+  // Initialize
+  document.getElementById('targetDisplay').textContent = target;
+  resetSimulation();
+  updateSlide();
+</script>
+
+</body>
+</html>

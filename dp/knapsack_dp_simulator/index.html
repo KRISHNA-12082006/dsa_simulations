@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>0/1 Knapsack – Visual DP Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    h1 { color: #76c7f5; text-align: center; margin: 20px 0; }
+
+    .slider-container {
+      width: 100vw;
+      height: calc(100vh - 80px);
+      position: relative;
+      overflow: hidden;
+    }
+    .slides {
+      display: flex;
+      width: 300vw;
+      height: 100%;
+      transition: transform 0.6s ease-in-out;
+    }
+    .slide {
+      width: 100vw;
+      padding: 40px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .slide h2 { color: #76c7f5; margin-bottom: 16px; }
+    .slide p, .slide ul {
+      line-height: 1.6;
+      font-size: 18px;
+    }
+
+    .nav-buttons {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      z-index: 100;
+    }
+    .nav-buttons button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .nav-buttons .prev { background: #9C27B0; color: white; }
+    .nav-buttons .next { background: #2196F3; color: white; }
+
+    .nav-buttons button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .nav-buttons button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+      margin-top: 20px;
+    }
+    .grid {
+      display: grid;
+      gap: 4px;
+      justify-content: flex-start;
+    }
+    .cell {
+      width: 60px;
+      height: 45px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #555;
+      border-radius: 6px;
+      background: #1b1b1b;
+      font-size: 18px;
+      transition: 0.3s;
+    }
+    .header { background: #333; font-weight: bold; }
+    .highlight-current { background: #ffeb3b; color: #000; border-color: #ffeb3b; }
+    .highlight-include { background: #76c7f5; color: #000; border-color: #76c7f5; }
+    .highlight-exclude { background: #4caf50; color: #000; border-color: #4caf50; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .controls button {
+      padding: 12px 22px;
+      border: none;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    #stepBtn { background: #4CAF50; color: white; }
+    #runBtn { background: #2196F3; color: white; }
+    #prevBtn { background: #9C27B0; color: white; }
+    #resetBtn { background: #f44336; color: white; }
+
+    .info-box {
+      padding: 15px;
+      border: 2px solid #76c7f5;
+      border-radius: 8px;
+      width: 400px;
+      background: #161616;
+      font-size: 16px;
+    }
+    .info-title {
+      font-weight: bold;
+      color: #76c7f5;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .item-info {
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 2px solid #555;
+      border-radius: 8px;
+      background: #222;
+      font-size: 16px;
+    }
+    .item-info .highlight { color: #ffe97d; font-weight: bold; }
+
+  </style>
+</head>
+<body>
+
+<h1>0/1 Knapsack – Visual DP Simulator</h1>
+
+<div class="slider-container">
+  <div class="slides" id="slides">
+
+    <!-- Slide 1: Question -->
+    <div class="slide" id="slide-question">
+      <h2>Question — Samasya Kya Hai?</h2>
+      <p>Humare paas <strong>n</strong> items hain. Har item ka ek <em>weight</em> (w<sub>i</sub>) aur ek <em>value</em> (v<sub>i</sub>) hai. Saath hi, hamare paas ek knapsack (bag) hai jiski capacity <strong>W</strong> hai — matlab usmein hum jitna weight daal sakte hain, uski limit W hai.</p>
+      <p>Hume decide karna hai ki kaunse items knapsack mein daalein, taki total weight W se zyada na ho aur total value jitni ho sake, wo maximize ho jaye. Aur ek item ko ya to poora lena hai ya bilkul nahi (fractional nahi — isliye “0/1”).</p>
+      <p>Udāharan ke liye: agar weights = [2, 3, 4, 5] aur values = [3, 4, 5, 8], aur capacity W = 10, to hum ye dekhna chaheinge ki kaunse items lene se value sabse zyada hogi jab weight ki constraint bhi ho.</p>
+    </div>
+
+    <!-- Slide 2: Approach / Explanation -->
+    <div class="slide" id="slide-approach">
+      <h2>Approach — Dynamic Programming (DP)</h2>
+      <p>Ye problem hum dynamic programming (DP) se bahut achhi tarah solve kar sakte hain, kyunki iska "optimal substructure" aur "overlapping subproblems" dono hain:</p>
+      <ul>
+        <li><strong>State Definition:</strong> Let <code>dp[i][w]</code> = maximum value hum paa sakte hain agar hum pehle <em>i items</em> ko dekhein aur remaining capacity exactly <em>w</em> ho.</li>
+        <li><strong>Recurrence (DP Relation):</strong></li>
+        <ul>
+          <li>Agar weight of current item \(w_i\) > w → matlab hum us item ko nahi le sakte:  
+            \[
+              dp[i][w] = dp[i-1][w]
+            \]</li>
+          <li>Warna (agar le sakte hain) → do choices hain:  
+            1. **Include karna:** value = \(v_i + dp[i-1][w - w_i]\)  
+            2. **Exclude karna:** value = \(dp[i-1][w]\)  
+            To hum choose karenge unmein se jo zyada value de raha ho:  
+            \[
+              dp[i][w] = \max(dp[i-1][w], v_i + dp[i-1][w - w_i])
+            \]</li>
+        </ul>
+        <li><strong>Base Case:</strong>  
+          - Agar \(i = 0\) (koi item nahi), to dp[0][w] = 0 for any w.  
+          - Agar \(w = 0\) (capacity 0), to dp[i][0] = 0 for any i.</li>
+      </ul>
+      <p><strong>Time Complexity:</strong> Agar n = number of items aur W = capacity, to bottom-up tabulation mein time complexity hoti hai \(O(n \times W)\). Yeh ek pseudo-polynomial time algorithm hai. :contentReference[oaicite:0]{index=0}</p>
+      <p><strong>Kyu DP karna sahi hai (Greedy kyun fail karegi)?</strong>  
+        Agar hum greedy strategy (jaise sabse zyada value-per-weight chunna) use karte hain, to wo hamesha optimal nahi hoti. 0/1 knapsack mein ek example ho sakta hai jahan value-per-weight zyada hai par wo item lene se doosre better combination garbar ho sakta hai. :contentReference[oaicite:1]{index=1}</p>
+    </div>
+
+    <!-- Slide 3: Example + Simulation -->
+    <div class="slide" id="slide-sim">
+      <h2>Example + Simulation</h2>
+
+      <div class="item-info" id="itemInfo">
+        Item <span class="highlight" id="curItemIdx">-</span>: weight = <span class="highlight" id="curWeight">-</span>, value = <span class="highlight" id="curValue">-</span>
+      </div>
+
+      <div class="main-container">
+        <div id="gridContainer"></div>
+        <div class="info-box" id="decisionBox">
+          <div class="info-title">DP Decision Explanation</div>
+          Click “Next Step” to start the simulation.
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="prevBtn">Previous Step</button>
+        <button id="stepBtn">Next Step</button>
+        <button id="runBtn">Run All</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <button class="prev" id="navPrevBtn" onclick="prevSlide()">‹ Back</button>
+    <button class="next" id="navNextBtn" onclick="nextSlide()">Forward ›</button>
+  </div>
+</div>
+
+<script>
+  // Slide navigation logic
+  const slides = document.getElementById("slides");
+  let currentSlide = 0;
+  const totalSlides = 3;
+
+  function updateSlide() {
+    slides.style.transform = `translateX(-${currentSlide * 100}vw)`;
+
+    document.getElementById('navPrevBtn').disabled = currentSlide === 0;
+    document.getElementById('navNextBtn').disabled = currentSlide === totalSlides - 1;
+  }
+
+  function showSlide(idx) {
+    currentSlide = idx;
+    updateSlide();
+  }
+
+  function nextSlide() {
+    if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      updateSlide();
+    }
+  }
+
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateSlide();
+    }
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') prevSlide();
+    if (e.key === 'ArrowRight') nextSlide();
+  });
+
+  // DP Simulation logic
+  const weights = [2,3,4,5];
+  const values = [3,4,5,8];
+  const capacity = 10;
+
+  let dp, row = 1, col = 1, autoRun = null, visitedCells = [];
+
+  function resetDP(){
+    row = 1; col = 1; visitedCells = [];
+    dp = Array.from({length: weights.length + 1}, () => Array(capacity + 1).fill(0));
+    renderTable();
+    document.getElementById("decisionBox").innerHTML = "<div class='info-title'>DP Decision Explanation</div>Click “Next Step” to begin.";
+    document.getElementById("curItemIdx").textContent = '-';
+    document.getElementById("curWeight").textContent = '-';
+    document.getElementById("curValue").textContent = '-';
+  }
+
+  function makeCell(text, className="cell"){
+    const div = document.createElement("div");
+    div.className = className;
+    div.textContent = text;
+    return div;
+  }
+
+  function renderTable(highlight=null, includeCell=null, excludeCell=null){
+    const container = document.getElementById("gridContainer");
+    container.innerHTML = "";
+    container.className = "grid";
+    container.style.gridTemplateColumns = `repeat(${capacity + 1 + 3}, 60px)`;
+    container.appendChild(makeCell("Idx","header"));
+    container.appendChild(makeCell("W","header"));
+    container.appendChild(makeCell("V","header"));
+    for (let c = 0; c <= capacity; c++) container.appendChild(makeCell(c, "header"));
+    for (let r = 0; r < dp.length; r++) {
+      container.appendChild(makeCell(r, "header"));
+      container.appendChild(makeCell(r === 0 ? '-' : weights[r-1], "header"));
+      container.appendChild(makeCell(r === 0 ? '-' : values[r-1], "header"));
+      for (let c = 0; c <= capacity; c++){
+        const cell = makeCell(dp[r][c]);
+        if (highlight && highlight.r === r && highlight.c === c) cell.classList.add("highlight-current");
+        if (includeCell && includeCell.r === r && includeCell.c === c) cell.classList.add("highlight-include");
+        if (excludeCell && excludeCell.r === r && excludeCell.c === c) cell.classList.add("highlight-exclude");
+        container.appendChild(cell);
+      }
+    }
+  }
+
+  function performCalculation(){
+    const w = weights[row - 1], v = values[row - 1], cap = col;
+    let include = null, exclude = null;
+    if (cap < w) {
+      exclude = dp[row - 1][cap];
+      dp[row][cap] = exclude;
+    } else {
+      include = v + dp[row - 1][cap - w];
+      exclude = dp[row - 1][cap];
+      dp[row][cap] = Math.max(include, exclude);
+    }
+
+    const includeCell = (include !== null ? {r: row - 1, c: cap - w} : null);
+    const excludeCell = {r: row - 1, c: cap};
+    renderTable({r: row, c: cap}, includeCell, excludeCell);
+
+    document.getElementById("decisionBox").innerHTML = `
+      <div class="info-title">DP Decision Explanation</div>
+      <b>At dp[${row}][${cap}]</b><br>
+      Processing Item ${row} → weight = ${w}, value = ${v}<br><br>
+      <b>We Read:</b><br>
+      dp[${row - 1}][${cap}] = ${dp[row - 1][cap]}<br>
+      ${include !== null ? `dp[${row - 1}][${cap - w}] = ${dp[row - 1][cap - w]}<br>` : ""}
+      <br><b>Comparing:</b> ${include !== null ? `Include = ${include} vs Exclude = ${exclude}` : `Only Exclude = ${exclude}`}<br>
+      <b>We Write:</b> ${dp[row][cap]}<br>
+      <b>Reason:</b> ${cap < w ? "Item cannot fit (too heavy)" : (include >= exclude ? "Including gives more or equal value" : "Excluding is better")}
+    `;
+  }
+
+  function nextStep(){
+    if (row >= dp.length) return;
+    document.getElementById("curItemIdx").textContent = row;
+    document.getElementById("curWeight").textContent = weights[row - 1];
+    document.getElementById("curValue").textContent = values[row - 1];
+    visitedCells.push({r: row, c: col});
+    performCalculation();
+    moveForward();
+  }
+
+  function moveForward(){
+    col++;
+    if (col > capacity) {
+      col = 1;
+      row++;
+    }
+  }
+
+  function prevStep(){
+    if (visitedCells.length === 0) return;
+    const last = visitedCells.pop();
+    row = last.r;
+    col = last.c;
+    renderTable({r: row, c: col});
+    document.getElementById("decisionBox").innerHTML =
+      `Moved back to dp[${row}][${col}]. (DP table didn’t change for this move.)`;
+  }
+
+  function runAll(){
+    if (autoRun) return;
+    autoRun = setInterval(() => {
+      if (row >= dp.length) { clearInterval(autoRun); autoRun = null; return; }
+      nextStep();
+    }, 800);
+  }
+
+  document.getElementById("stepBtn").onclick = nextStep;
+  document.getElementById("prevBtn").onclick = prevStep;
+  document.getElementById("runBtn").onclick = runAll;
+  document.getElementById("resetBtn").onclick = resetDP;
+
+  resetDP();
+</script>
+
+</body>
+</html>

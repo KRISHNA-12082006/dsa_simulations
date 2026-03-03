@@ -19,7 +19,7 @@
                 "questions": [
                     {"title": "Two Sum Problem", "link": "basic_data_structures/two-sum-problem"}
                 ]
-            }
+            },
             {
                 "subtopic": "Arrays",
                 "questions":

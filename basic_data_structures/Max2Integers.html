@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Step-by-Step Sliding Window Visualizer</title>
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#0f172a,#1e293b);
+    color: white;
+    text-align: center;
+}
+
+h1 {
+    margin-top: 20px;
+    color: #38bdf8;
+}
+
+.controls {
+    margin: 20px;
+}
+
+input {
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    width: 250px;
+}
+
+button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #38bdf8;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+button:hover {
+    background: #22d3ee;
+}
+
+.array-wrapper {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    position: relative;
+}
+
+.box {
+    width: 70px;
+    height: 70px;
+    background: #1e293b;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.window {
+    background: #334155;
+    transform: scale(1.1);
+}
+
+.start {
+    border: 4px solid #22c55e;
+}
+
+.end {
+    border: 4px solid #ef4444;
+}
+
+.label {
+    position: absolute;
+    top: 75px;
+    width: 100%;
+    font-size: 12px;
+    color: #facc15;
+    font-weight: bold;
+}
+
+.variables {
+    margin-top: 40px;
+    background: #111827;
+    display: inline-block;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: left;
+    font-family: monospace;
+}
+
+.variables .name {
+    color: #22d3ee;
+    font-weight: bold;
+}
+
+.phase {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #facc15;
+}
+</style>
+</head>
+<body>
+
+<h1>Step-by-Step Sliding Window</h1>
+
+<div class="controls">
+    <input id="arrayInput" value="1,2,1,2,3">
+    <button onclick="start()">Start</button>
+    <button onclick="nextStep()">Next Step</button>
+    <button onclick="reset()">Reset</button>
+</div>
+
+<div class="array-wrapper" id="arrayView"></div>
+
+<div class="variables" id="vars"></div>
+<div class="phase" id="phase"></div>
+
+<script>
+let arr = [];
+let l;
+let startIdx;
+let endIdx;
+let currL;
+let maxL;
+let chars;
+
+let state = "idle"; // states: idle → expand → shrink → update → done
+
+function renderArray() {
+    const container = document.getElementById("arrayView");
+    container.innerHTML = "";
+
+    arr.forEach((val, i) => {
+        let box = document.createElement("div");
+        box.className = "box";
+
+        if (i >= startIdx && i <= endIdx) box.classList.add("window");
+        if (i === startIdx) box.classList.add("start");
+        if (i === endIdx) box.classList.add("end");
+
+        box.textContent = val;
+
+        if (i === startIdx || i === endIdx) {
+            let label = document.createElement("div");
+            label.className = "label";
+            label.textContent = (i === startIdx ? "START" : "END");
+            box.appendChild(label);
+        }
+
+        container.appendChild(box);
+    });
+}
+
+function renderVars() {
+    const varsHTML = `
+<span class="name">l</span>       = ${l}<br>
+<span class="name">start</span>   = ${startIdx}<br>
+<span class="name">end</span>     = ${endIdx}<br>
+<span class="name">currL</span>   = ${currL}<br>
+<span class="name">maxL</span>    = ${maxL}<br>
+<span class="name">chars</span>   = ${JSON.stringify(chars)}
+    `;
+    document.getElementById("vars").innerHTML = varsHTML;
+}
+
+function setPhase(text) {
+    document.getElementById("phase").textContent = "Phase: " + text;
+}
+
+function start() {
+    arr = document.getElementById("arrayInput").value.split(",").map(x => x.trim());
+    if(arr.length === 0) return;
+
+    l = arr.length;
+    startIdx = 0;
+    endIdx = 0;
+    currL = 1;
+    maxL = 1;
+    chars = {};
+    chars[arr[0]] = 1;
+
+    state = "expand";
+
+    renderArray();
+    renderVars();
+    setPhase("Expand Window");
+}
+
+function nextStep() {
+    if(state === "done") return;
+
+    if(state === "expand") {
+        if(endIdx >= l - 1) {
+            state = "done";
+            setPhase("Finished");
+            return;
+        }
+        endIdx++;
+        currL++;
+        chars[arr[endIdx]] = (chars[arr[endIdx]] || 0) + 1;
+
+        if(Object.keys(chars).length > 2) {
+            state = "shrink";
+            setPhase("Shrink Window (one step)");
+        } else {
+            state = "update";
+            setPhase("Update maxL");
+        }
+    } else if(state === "shrink") {
+        chars[arr[startIdx]]--;
+        currL--;
+        if(chars[arr[startIdx]] === 0) {
+            delete chars[arr[startIdx]];
+        }
+        startIdx++;
+
+        if(Object.keys(chars).length <= 2) {
+            state = "update";
+            setPhase("Update maxL");
+        }
+    } else if(state === "update") {
+        maxL = Math.max(maxL, currL);
+        state = "expand";
+        setPhase("Expand Window");
+    }
+
+    renderArray();
+    renderVars();
+}
+
+function reset() {
+    arr = [];
+    l = 0;
+    startIdx = 0;
+    endIdx = 0;
+    currL = 0;
+    maxL = 0;
+    chars = {};
+    state = "idle";
+
+    document.getElementById("arrayView").innerHTML = "";
+    document.getElementById("vars").innerHTML = "";
+    document.getElementById("phase").innerHTML = "";
+}
+</script>
+
+</body>
+</html>
